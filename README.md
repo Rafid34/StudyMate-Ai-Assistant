@@ -65,7 +65,7 @@ flowchart TD
 
 | Layer | Choice |
 |---|---|
-| LLM / Vision / Embeddings | Gemini API (`gemini-2.0-flash`, `text-embedding-004`) |
+| LLM / Vision / Embeddings | Gemini API (`gemini-3.5-flash-lite`, `text-embedding-004`) |
 | Orchestration | LangChain + LangGraph |
 | Vector store | ChromaDB (local, embedded) |
 | Web search | Gemini native Google Search grounding (Tavily as fallback) |
