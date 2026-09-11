@@ -44,7 +44,7 @@ from backend.prompts.templates import SEARCH_SUMMARY_SYSTEM_INSTRUCTION
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-3.5-flash-lite"
+_MODEL_NAME = "gemini-2.0-flash"
 
 
 # ---------------------------------------------------------------------------

@@ -138,7 +138,7 @@ def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
     )
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-2-preview",
+        model="text-embedding-004",
         google_api_key=GEMINI_API_KEY,
     )
 

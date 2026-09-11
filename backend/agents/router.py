@@ -49,7 +49,7 @@ from backend.prompts.templates import ROUTER_DECISION_PROMPT, ROUTER_SYSTEM_PROM
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-3.5-flash-lite"
+_MODEL_NAME = "gemini-2.0-flash"
 
 # Keywords that strongly suggest the query needs live web information.
 _SEARCH_SIGNALS: frozenset[str] = frozenset(

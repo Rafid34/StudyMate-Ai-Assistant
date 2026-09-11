@@ -111,7 +111,7 @@ def retrieve(
     )
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-2-preview",
+        model="text-embedding-004",
         google_api_key=GEMINI_API_KEY,
     )
 

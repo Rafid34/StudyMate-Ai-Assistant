@@ -76,7 +76,7 @@ from backend.prompts.templates import (
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-3.5-flash-lite"
+_MODEL_NAME = "gemini-2.0-flash"
 
 # Maximum characters stored in a Source.content_snippet sent back to the UI.
 _SNIPPET_MAX = 300

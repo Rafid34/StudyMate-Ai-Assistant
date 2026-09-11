@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Model configuration
 # ---------------------------------------------------------------------------
-_MODEL_NAME = "gemini-3.5-flash-lite"
+_MODEL_NAME = "gemini-2.0-flash"
 
 
 def _build_llm() -> ChatGoogleGenerativeAI:
