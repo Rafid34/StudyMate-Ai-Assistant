@@ -49,7 +49,7 @@ from backend.prompts.templates import ROUTER_DECISION_PROMPT, ROUTER_SYSTEM_PROM
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-2.0-flash"
+_MODEL_NAME = "gemini-3.6-flash"
 
 # Keywords that strongly suggest the query needs live web information.
 _SEARCH_SIGNALS: frozenset[str] = frozenset(
@@ -59,11 +59,6 @@ _SEARCH_SIGNALS: frozenset[str] = frozenset(
         "2024", "2025", "2026", "this year", "last year",
     }
 )
-
-
-# ---------------------------------------------------------------------------
-# Public return type
-# ---------------------------------------------------------------------------
 
 
 class RouterDecision(BaseModel):
@@ -82,12 +77,7 @@ class RouterDecision(BaseModel):
     reasoning: str = ""
 
 
-# ---------------------------------------------------------------------------
-# Internal Pydantic schema for structured LLM output
-# (excludes use_ocr — that flag is determined deterministically)
-# ---------------------------------------------------------------------------
-
-
+# Excludes use_ocr — that flag is determined deterministically, not by the LLM.
 class _LLMDecision(BaseModel):
     """Schema passed to ``with_structured_output`` for the routing LLM call."""
 
@@ -110,11 +100,6 @@ class _LLMDecision(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
-# LLM builder
-# ---------------------------------------------------------------------------
-
-
 def _build_llm() -> ChatGoogleGenerativeAI:
     """Instantiate Gemini 2.0 Flash for routing.
 
@@ -126,11 +111,6 @@ def _build_llm() -> ChatGoogleGenerativeAI:
         google_api_key=GEMINI_API_KEY,
         temperature=0,
     )
-
-
-# ---------------------------------------------------------------------------
-# Heuristic fallback (no API calls — always succeeds)
-# ---------------------------------------------------------------------------
 
 
 def _heuristic_route(query: str, has_docs: bool) -> tuple[bool, bool, str]:
@@ -156,11 +136,6 @@ def _heuristic_route(query: str, has_docs: bool) -> tuple[bool, bool, str]:
         parts.append("web search")
     reasoning = f"Heuristic fallback: consulting {' + '.join(parts)}."
     return use_rag, use_search, reasoning
-
-
-# ---------------------------------------------------------------------------
-# LLM routing path
-# ---------------------------------------------------------------------------
 
 
 def _llm_route(
@@ -213,11 +188,6 @@ def _llm_route(
     return decision.use_rag, decision.use_search, decision.reasoning
 
 
-# ---------------------------------------------------------------------------
-# Public interface
-# ---------------------------------------------------------------------------
-
-
 @traceable(name="router_agent")
 def route(
     query: str,
@@ -250,7 +220,6 @@ def route(
     # OCR is always activated by the presence of an image — no LLM needed.
     use_ocr = has_image
 
-    # Attempt LLM routing; fall back to heuristics on any failure.
     try:
         use_rag, use_search, reasoning = _llm_route(query, has_image, has_docs)
     except Exception as exc:

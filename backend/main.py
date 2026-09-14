@@ -33,8 +33,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from langsmith import traceable
 
-# ── Import config first ──────────────────────────────────────────────────────
-# This must precede all other backend imports so that the LangChain / LangSmith
+# Must precede all other backend imports so that the LangChain / LangSmith
 # env vars are written into os.environ before any LangChain objects are built.
 import backend.config  # noqa: F401
 
@@ -55,8 +54,6 @@ from backend.rag.ingest import ingest_pdf
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── FastAPI app ──────────────────────────────────────────────────────────────
-
 app = FastAPI(title="StudyMate API", version="1.0.0")
 
 app.add_middleware(
@@ -67,7 +64,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── In-memory session state ──────────────────────────────────────────────────
 # These dicts are process-local and reset on server restart — acceptable for
 # the single-session demo described in Section 12 of the spec.
 
@@ -78,8 +74,6 @@ _ocr_cache: dict[str, str] = {}
 # Tracks which sessions have at least one ingested PDF in ChromaDB.
 # Updated on each successful /upload (PDF path).
 _sessions_with_docs: set[str] = set()
-
-# ── File-type helpers ────────────────────────────────────────────────────────
 
 _IMAGE_MIME_TYPES: frozenset[str] = frozenset(
     {
@@ -111,20 +105,15 @@ _EXT_TO_MIME: dict[str, str] = {
 
 
 def _is_image(content_type: str | None, filename: str) -> bool:
-    """Return True if the file looks like a supported image."""
     if content_type and content_type.lower() in _IMAGE_MIME_TYPES:
         return True
     return Path(filename).suffix.lower() in _IMAGE_EXTENSIONS
 
 
 def _resolve_mime_type(content_type: str | None, filename: str) -> str:
-    """Return the best MIME type string to pass to the OCR agent."""
     if content_type and content_type.lower() in _IMAGE_MIME_TYPES:
         return content_type.lower()
     return _EXT_TO_MIME.get(Path(filename).suffix.lower(), "image/jpeg")
-
-
-# ── Routes ───────────────────────────────────────────────────────────────────
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -144,7 +133,7 @@ async def upload(
     --------
     The file is written to a temporary location, chunked with
     ``RecursiveCharacterTextSplitter`` (~625-token chunks, ~100-token overlap),
-    embedded via Gemini ``text-embedding-004``, and stored in a per-session
+    embedded via Gemini ``gemini-embedding-001``, and stored in a per-session
     ChromaDB collection.  Returns ``doc_count`` (number of chunks stored).
 
     Image path
@@ -170,7 +159,6 @@ async def upload(
 
     file_bytes = await file.read()
 
-    # ── PDF: chunk + embed + store ──────────────────────────────────────────
     if is_pdf:
         tmp_path: Optional[str] = None
         try:
@@ -189,7 +177,6 @@ async def upload(
             chunks_stored = ingest_pdf(tmp_path, session_id)
             logger.info("Ingestion complete: %d chunk(s) stored.", chunks_stored)
 
-            # Mark this session as having at least one ingested document.
             _sessions_with_docs.add(session_id)
 
             return UploadResponse(
@@ -212,7 +199,6 @@ async def upload(
             if tmp_path is not None:
                 Path(tmp_path).unlink(missing_ok=True)
 
-    # ── Image: OCR via Gemini Vision ────────────────────────────────────────
     mime_type = _resolve_mime_type(content_type, filename)
     try:
         logger.info(
@@ -224,7 +210,6 @@ async def upload(
         )
         extracted_text = run_ocr(file_bytes, mime_type=mime_type)
 
-        # Cache so /ask can inject the OCR text into the synthesis context.
         _ocr_cache[session_id] = extracted_text
         logger.info(
             "OCR complete: %d chars extracted, cached for session '%s'.",
@@ -245,9 +230,6 @@ async def upload(
             status_code=500,
             detail=f"Failed to process image via OCR: {exc}",
         ) from exc
-
-
-# ── /ask pipeline ────────────────────────────────────────────────────────────
 
 
 @traceable(name="studymate_pipeline")
@@ -278,7 +260,6 @@ def _run_ask_pipeline(
         A 3-tuple of ``(answer, sources, trace_url)``.  ``trace_url`` is the
         LangSmith URL for this run, or ``None`` when tracing is off.
     """
-    # ── Step 1: Router ───────────────────────────────────────────────────────
     decision: RouterDecision = route(
         query=query,
         has_image=has_image,
@@ -296,17 +277,15 @@ def _run_ask_pipeline(
     rag_chunks: list[RagChunk] | None = None
     search_result: SearchResult | None = None
 
-    # ── Step 2a: OCR (from cache — already ran at /upload time) ─────────────
+    # OCR already ran at /upload time; just reuse the cached text.
     if decision.use_ocr and cached_ocr:
         ocr_text = cached_ocr
         logger.info("Pipeline: injecting cached OCR text (%d chars).", len(ocr_text))
 
-    # ── Step 2b: RAG ─────────────────────────────────────────────────────────
     if decision.use_rag:
         rag_chunks = run_rag(query=query, session_id=session_id)
         logger.info("Pipeline: RAG returned %d chunk(s).", len(rag_chunks))
 
-    # ── Step 2c: Search ──────────────────────────────────────────────────────
     if decision.use_search:
         search_result = run_search(query=query)
         logger.info(
@@ -315,7 +294,6 @@ def _run_ask_pipeline(
             len(search_result.sources),
         )
 
-    # ── Step 3: Synthesis ────────────────────────────────────────────────────
     result: SynthesisResult = synthesize(
         query=query,
         ocr_text=ocr_text,
@@ -323,7 +301,6 @@ def _run_ask_pipeline(
         search_result=search_result,
     )
 
-    # ── Step 4: Grab the LangSmith trace URL (best-effort) ──────────────────
     trace_url: str | None = None
     try:
         from langsmith import get_current_run_tree  # available in langsmith ≥ 0.1
@@ -358,7 +335,6 @@ async def ask(request: AskRequest) -> AskResponse:
     session_id = request.session_id
     query = request.query  # already stripped/validated by the Pydantic schema
 
-    # Determine session state from in-memory caches.
     cached_ocr = _ocr_cache.get(session_id)
     has_image = cached_ocr is not None
     has_docs = session_id in _sessions_with_docs

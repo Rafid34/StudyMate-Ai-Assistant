@@ -13,7 +13,7 @@ from typing import Any
 import requests
 import streamlit as st
 
-# ── Must be the very first Streamlit call ────────────────────────────────────
+# Must be the very first Streamlit call.
 st.set_page_config(
     page_title="StudyMate — AI Study Assistant",
     page_icon="📚",
@@ -21,13 +21,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Constants ────────────────────────────────────────────────────────────────
 DEFAULT_BACKEND_URL = "http://localhost:8000"
 UPLOAD_TIMEOUT_S = 120  # PDFs can take a while to embed
 ASK_TIMEOUT_S = 90
 
 
-# ── Helper: render source cards ──────────────────────────────────────────────
 def _render_sources(sources: list[dict[str, Any]]) -> None:
     """Render an expandable source panel beneath an assistant message."""
     if not sources:
@@ -59,7 +57,6 @@ def _render_sources(sources: list[dict[str, Any]]) -> None:
                     st.divider()
 
 
-# ── Session state defaults ───────────────────────────────────────────────────
 def _init_state() -> None:
     defaults: dict[str, Any] = {
         "session_id": str(uuid.uuid4()),
@@ -78,14 +75,12 @@ def _init_state() -> None:
 
 _init_state()
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("📚 StudyMate")
     st.caption("AI-powered study assistant")
 
     st.divider()
 
-    # ── Backend settings ─────────────────────────────────────────────────────
     with st.expander("⚙️ Settings", expanded=False):
         new_url = st.text_input(
             "Backend URL",
@@ -108,7 +103,6 @@ with st.sidebar:
 
     st.divider()
 
-    # ── File uploader ─────────────────────────────────────────────────────────
     st.subheader("📁 Upload Study Materials")
     st.caption("PDF → indexed for RAG  •  Image → OCR text extraction")
 
@@ -182,7 +176,6 @@ with st.sidebar:
                 except Exception as exc:
                     st.error(f"Unexpected error: {exc}")
 
-    # ── Uploaded files list ───────────────────────────────────────────────────
     if st.session_state.uploaded_files:
         st.divider()
         st.markdown("**Uploaded this session:**")
@@ -192,7 +185,6 @@ with st.sidebar:
 
     st.divider()
 
-    # ── Session controls ──────────────────────────────────────────────────────
     col1, col2 = st.columns(2)
     with col1:
         st.caption(f"Session `{st.session_state.session_id[:8]}…`")
@@ -205,7 +197,6 @@ with st.sidebar:
             st.rerun()
 
 
-# ── Main chat area ───────────────────────────────────────────────────────────
 st.title("💬 Ask StudyMate")
 
 if not st.session_state.uploaded_files:
@@ -216,7 +207,6 @@ if not st.session_state.uploaded_files:
         icon="💡",
     )
 
-# ── Render chat history ───────────────────────────────────────────────────────
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -229,16 +219,13 @@ for msg in st.session_state.messages:
                     f"[🔍 View LangSmith trace]({msg['trace_url']})"
                 )
 
-# ── Chat input ────────────────────────────────────────────────────────────────
 if prompt := st.chat_input("Ask a question about your study materials…"):
-    # Append and render the user bubble immediately
     st.session_state.messages.append(
         {"role": "user", "content": prompt, "sources": [], "trace_url": None}
     )
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call the backend and stream the assistant bubble
     with st.chat_message("assistant"):
         with st.spinner("Thinking…"):
             try:

@@ -44,12 +44,7 @@ from backend.prompts.templates import SEARCH_SUMMARY_SYSTEM_INSTRUCTION
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-2.0-flash"
-
-
-# ---------------------------------------------------------------------------
-# Return type
-# ---------------------------------------------------------------------------
+_MODEL_NAME = "gemini-3.6-flash"
 
 
 @dataclass
@@ -63,11 +58,6 @@ class SearchResult:
 
     summary: str
     sources: list[Source] = field(default_factory=list)
-
-
-# ---------------------------------------------------------------------------
-# Gemini-native Google Search grounding path (google-genai SDK 2.x)
-# ---------------------------------------------------------------------------
 
 
 def _extract_gemini_sources(response) -> list[Source]:
@@ -146,11 +136,6 @@ def _run_gemini_search(query: str) -> SearchResult:
     return SearchResult(summary=summary, sources=sources)
 
 
-# ---------------------------------------------------------------------------
-# Tavily API path
-# ---------------------------------------------------------------------------
-
-
 @traceable(name="search_agent:tavily")
 def _run_tavily_search(query: str) -> SearchResult:
     """Call the Tavily Search API and return a summary with source list.
@@ -208,11 +193,6 @@ def _run_tavily_search(query: str) -> SearchResult:
         len(sources),
     )
     return SearchResult(summary=summary, sources=sources)
-
-
-# ---------------------------------------------------------------------------
-# Public interface
-# ---------------------------------------------------------------------------
 
 
 @traceable(name="search_agent")

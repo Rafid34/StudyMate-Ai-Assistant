@@ -2,8 +2,8 @@
 
 Spec reference: Section 6 (Agent Responsibilities — RAG Agent).
 
-The agent embeds *query* using the same ``text-embedding-004`` model used at
-ingest time, then runs a cosine-similarity top-k search against the
+The agent embeds *query* using the same ``gemini-embedding-001`` model used
+at ingest time, then runs a cosine-similarity top-k search against the
 per-session ChromaDB collection created by ``rag/ingest.py``.  Results are
 returned as :class:`~backend.agents.synthesis_agent.RagChunk` objects, which
 the Synthesis Agent consumes directly.

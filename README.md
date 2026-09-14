@@ -46,7 +46,7 @@ flowchart TD
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | LLM / Vision | Gemini 2.0 Flash (`gemini-2.0-flash`) | Routing, OCR, search grounding, synthesis |
-| Embeddings | Gemini Text Embedding (`text-embedding-004`) | PDF chunk embeddings for RAG |
+| Embeddings | Gemini Text Embedding (`gemini-embedding-001`) | PDF chunk embeddings for RAG |
 | Orchestration | LangChain + LangGraph | Agent abstraction, structured output, message handling |
 | Vector Store | ChromaDB (local, persisted) | Stores and retrieves embedded PDF chunks |
 | Web Search | Gemini native Google Search grounding (Tavily fallback) | Live web information |
@@ -109,11 +109,13 @@ The router receives the user's query plus two boolean flags: `has_image` (was an
 | Chunk size | 2500 characters (~625 tokens) |
 | Chunk overlap | 400 characters (~100 tokens) |
 | Splitter | `RecursiveCharacterTextSplitter` with separators `["\n\n", "\n", ". ", " ", ""]` |
-| Embedding model | `text-embedding-004` |
+| Embedding model | `gemini-embedding-001` (output dimensionality pinned to 768) |
 | Top-k retrieval | 5 chunks |
 | Similarity metric | Cosine (default in ChromaDB) |
 
 PDFs are loaded with `PyPDFLoader`, split into overlapping chunks, embedded, and stored in a per-session ChromaDB collection named `studymate_<session_id>`. At query time, the same embedding model embeds the query and retrieves the top-5 most similar chunks.
+
+> **Caution:** `ingest.py` and `retriever.py` must always use the exact same `model` string and `output_dimensionality`. If you ever change the embedding model, delete `CHROMA_DB_PATH` (default `./data/chroma_db`) first and re-ingest -- old collections are not compatible with a new model/dimensionality and will not raise an obvious error at query time. See ["Read Before You Use This"](#-read-before-you-use-this) at the top of this file.
 
 ### OCR Agent (`backend/agents/ocr_agent.py`)
 
@@ -234,6 +236,8 @@ streamlit run frontend/app.py
 ```
 
 - UI opens automatically at: `http://localhost:8501`
+
+> **Caution:** If you change any code in `backend/` or any value in `.env` while the backend is already running, confirm `uvicorn` actually picked it up. `--reload` should restart automatically on save, but if you have more than one terminal/process running `uvicorn backend.main:app`, or you're editing a different copy of the project than the one that's running, you will keep hitting the old behavior. When in doubt, stop the backend (Ctrl+C) and start it again.
 
 ---
 

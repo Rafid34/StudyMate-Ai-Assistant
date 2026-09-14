@@ -4,10 +4,19 @@ Public API
 ----------
 ingest_pdf(pdf_path, session_id="default") -> int
     Load a PDF from *pdf_path*, split it into overlapping text chunks,
-    embed each chunk using Google's ``text-embedding-004`` model via the
-    Gemini API (model name passed without the ``models/`` prefix, required
+    embed each chunk using Google's ``gemini-embedding-001`` model via the
+    Gemini API (model name passed with the ``models/`` prefix, required
     by langchain-google-genai 2.x), and persist the resulting vectors in a
     per-session ChromaDB collection.
+
+    ``gemini-embedding-001`` natively outputs 3072-dimensional vectors, but
+    is trained with Matryoshka Representation Learning (MRL), so it supports
+    truncated output dimensions with minimal quality loss. ``output_dimensionality``
+    is pinned to 768 here to match the dimensionality of the retired
+    ``text-embedding-004`` model, so nothing downstream that assumes vector
+    size needs to change. This value MUST match the one used in
+    ``retriever.py``, or similarity search against the persisted collection
+    will fail/return garbage.
 
     Returns the number of chunks stored.
 
@@ -40,34 +49,22 @@ from backend.config import CHROMA_DB_PATH, GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Chunking constants
-# 4 chars per token is a standard rough estimate for English text.
-#   chunk_size=2500  → ~625 tokens (mid-range of the 500-800 token target)
+# 4 chars/token is a standard rough estimate for English text.
+#   chunk_size=2500   → ~625 tokens (mid-range of the 500-800 token target)
 #   chunk_overlap=400 → ~100 tokens
-# ---------------------------------------------------------------------------
 _CHUNK_SIZE = 2500
 _CHUNK_OVERLAP = 400
 _SEPARATORS = ["\n\n", "\n", ". ", " ", ""]
 
-# ---------------------------------------------------------------------------
-# Collection naming
-# ---------------------------------------------------------------------------
 _COLLECTION_PREFIX = "studymate_"
 _MAX_COLLECTION_LEN = 63
 _INVALID_CHAR_RE = re.compile(r"[^a-zA-Z0-9_-]")
 
 
 def _collection_name(session_id: str) -> str:
-    """Return a ChromaDB-safe collection name for *session_id*."""
     safe_id = _INVALID_CHAR_RE.sub("_", session_id)
     name = f"{_COLLECTION_PREFIX}{safe_id}"
     return name[:_MAX_COLLECTION_LEN]
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
 
 
 def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
@@ -98,7 +95,6 @@ def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
     source_name = pdf_path.name
     collection = _collection_name(session_id)
 
-    # 1. Load pages -----------------------------------------------------------
     logger.info("Loading PDF '%s'", source_name)
     loader = PyPDFLoader(str(pdf_path))
     pages = loader.load()
@@ -109,7 +105,6 @@ def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
 
     logger.info("Loaded %d page(s) from '%s'", len(pages), source_name)
 
-    # 2. Split into overlapping chunks ----------------------------------------
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=_CHUNK_SIZE,
         chunk_overlap=_CHUNK_OVERLAP,
@@ -124,12 +119,11 @@ def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
 
     logger.info("Split '%s' into %d chunk(s)", source_name, len(chunks))
 
-    # 3. Stamp metadata on every chunk for downstream source attribution ------
+    # Stamp metadata on every chunk for downstream source attribution.
     for chunk in chunks:
         chunk.metadata["source"] = source_name
         chunk.metadata["session_id"] = session_id
 
-    # 4. Embed and persist into ChromaDB --------------------------------------
     logger.info(
         "Embedding %d chunk(s) and storing in ChromaDB collection '%s' at '%s'",
         len(chunks),
@@ -138,8 +132,9 @@ def ingest_pdf(pdf_path: str | Path, session_id: str = "default") -> int:
     )
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="text-embedding-004",
+        model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,
+        output_dimensionality=768,
     )
 
     Chroma.from_documents(

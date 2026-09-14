@@ -32,10 +32,7 @@ from backend.prompts.templates import OCR_EXTRACTION_PROMPT
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Model configuration
-# ---------------------------------------------------------------------------
-_MODEL_NAME = "gemini-2.0-flash"
+_MODEL_NAME = "gemini-3.6-flash"
 
 
 def _build_llm() -> ChatGoogleGenerativeAI:
@@ -51,10 +48,6 @@ def _build_llm() -> ChatGoogleGenerativeAI:
         temperature=0,
     )
 
-
-# ---------------------------------------------------------------------------
-# Public interface
-# ---------------------------------------------------------------------------
 
 @traceable(name="ocr_agent")
 def run_ocr(image_bytes: bytes, mime_type: str = "image/jpeg") -> str:
@@ -93,7 +86,6 @@ def run_ocr(image_bytes: bytes, mime_type: str = "image/jpeg") -> str:
         mime_type,
     )
 
-    # Encode the image as a base64 data-URL that Gemini Vision understands.
     b64_image = base64.b64encode(image_bytes).decode("utf-8")
     data_url = f"data:{mime_type};base64,{b64_image}"
 

@@ -3,9 +3,10 @@
 Public API
 ----------
 retrieve(query, session_id="default", k=5) -> list[RetrievedChunk]
-    Embed *query* using the same ``text-embedding-004`` model used at ingest
-    time, then run a cosine-similarity top-k search against the per-session
-    ChromaDB collection created by ``ingest.py``.
+    Embed *query* using the same ``gemini-embedding-001`` model (with the
+    same ``output_dimensionality=768``) used at ingest time, then run a
+    cosine-similarity top-k search against the per-session ChromaDB
+    collection created by ``ingest.py``.
 
     Returns a list of :class:`RetrievedChunk` objects ordered by descending
     similarity score, each carrying the chunk text and the source filename
@@ -25,25 +26,17 @@ from backend.config import CHROMA_DB_PATH, GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Collection naming — mirrors ingest.py exactly so retrieval always targets
+# Collection naming mirrors ingest.py exactly so retrieval always targets
 # the same collection that was written during ingestion.
-# ---------------------------------------------------------------------------
 _COLLECTION_PREFIX = "studymate_"
 _MAX_COLLECTION_LEN = 63
 _INVALID_CHAR_RE = re.compile(r"[^a-zA-Z0-9_-]")
 
 
 def _collection_name(session_id: str) -> str:
-    """Return a ChromaDB-safe collection name for *session_id*."""
     safe_id = _INVALID_CHAR_RE.sub("_", session_id)
     name = f"{_COLLECTION_PREFIX}{safe_id}"
     return name[:_MAX_COLLECTION_LEN]
-
-
-# ---------------------------------------------------------------------------
-# Return type
-# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -64,11 +57,6 @@ class RetrievedChunk:
     text: str
     source: str
     score: float | None = None
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
 
 
 def retrieve(
@@ -111,8 +99,9 @@ def retrieve(
     )
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="text-embedding-004",
+        model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,
+        output_dimensionality=768,
     )
 
     # Open the existing persisted collection — does NOT create a new one.

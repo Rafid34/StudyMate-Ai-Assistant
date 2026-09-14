@@ -76,15 +76,10 @@ from backend.prompts.templates import (
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "gemini-2.0-flash"
+_MODEL_NAME = "gemini-3.6-flash"
 
 # Maximum characters stored in a Source.content_snippet sent back to the UI.
 _SNIPPET_MAX = 300
-
-
-# ---------------------------------------------------------------------------
-# Data transfer types
-# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -122,11 +117,6 @@ class SynthesisResult:
     sources: list[Source] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# LLM builder
-# ---------------------------------------------------------------------------
-
-
 def _build_llm() -> ChatGoogleGenerativeAI:
     """Instantiate Gemini 2.0 Flash for synthesis.
 
@@ -139,11 +129,6 @@ def _build_llm() -> ChatGoogleGenerativeAI:
         google_api_key=GEMINI_API_KEY,
         temperature=0.2,
     )
-
-
-# ---------------------------------------------------------------------------
-# Context block builder
-# ---------------------------------------------------------------------------
 
 
 def _build_context_blocks(
@@ -166,14 +151,12 @@ def _build_context_blocks(
     """
     blocks: list[str] = []
 
-    # --- OCR ----------------------------------------------------------------
     if ocr_text and ocr_text.strip():
         blocks.append(
             SYNTHESIS_CONTEXT_OCR_HEADER + "\n"
             + ocr_text.strip()
         )
 
-    # --- RAG ----------------------------------------------------------------
     for chunk in (rag_chunks or []):
         if chunk.content and chunk.content.strip():
             blocks.append(
@@ -181,7 +164,6 @@ def _build_context_blocks(
                 + chunk.content.strip()
             )
 
-    # --- Search -------------------------------------------------------------
     if search_result and search_result.summary and search_result.summary.strip():
         blocks.append(
             SYNTHESIS_CONTEXT_SEARCH_HEADER + "\n"
@@ -192,11 +174,6 @@ def _build_context_blocks(
         return SYNTHESIS_CONTEXT_NO_CONTEXT
 
     return "\n\n".join(blocks)
-
-
-# ---------------------------------------------------------------------------
-# Source collector
-# ---------------------------------------------------------------------------
 
 
 def _collect_sources(
@@ -239,11 +216,6 @@ def _collect_sources(
         sources.extend(search_result.sources)
 
     return sources
-
-
-# ---------------------------------------------------------------------------
-# Public interface
-# ---------------------------------------------------------------------------
 
 
 @traceable(name="synthesis_agent")

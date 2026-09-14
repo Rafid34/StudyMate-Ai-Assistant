@@ -3,9 +3,6 @@
 Keep every prompt here so they are easy to review and tune in one place.
 """
 
-# ---------------------------------------------------------------------------
-# OCR Agent
-# ---------------------------------------------------------------------------
 OCR_EXTRACTION_PROMPT = (
     "Extract all text from this image, preserving the original structure as closely as "
     "possible. Maintain headings, bullet points, numbered lists, tables, and paragraph "
@@ -14,9 +11,6 @@ OCR_EXTRACTION_PROMPT = (
     "formatting that was not present in the original image."
 )
 
-# ---------------------------------------------------------------------------
-# Search Agent
-# ---------------------------------------------------------------------------
 SEARCH_SUMMARY_SYSTEM_INSTRUCTION = (
     "You are a knowledgeable, concise study assistant. "
     "Use the Google Search results provided to answer the student's question "
@@ -24,10 +18,6 @@ SEARCH_SUMMARY_SYSTEM_INSTRUCTION = (
     "Structure your answer with clear key points. "
     "Only use information that is grounded in the search results."
 )
-
-# ---------------------------------------------------------------------------
-# Router Agent
-# ---------------------------------------------------------------------------
 
 ROUTER_SYSTEM_PROMPT = """\
 You are a routing agent for a university student study assistant called StudyMate.
@@ -60,10 +50,6 @@ Student query: "{query}"
 Decide which data sources to consult to answer this query.\
 """
 
-# ---------------------------------------------------------------------------
-# Synthesis Agent
-# ---------------------------------------------------------------------------
-
 SYNTHESIS_SYSTEM_PROMPT = """\
 You are StudyMate, a helpful university study assistant. Your task is to write a
 single, well-structured answer to a student's question by combining information
@@ -88,9 +74,6 @@ Guidelines you must follow:
    that no specific sources were consulted.
 7. Write in clear, student-friendly language.\
 """
-# ---------------------------------------------------------------------------
-# Synthesis Agent — context block headers and user message builder
-# ---------------------------------------------------------------------------
 
 SYNTHESIS_CONTEXT_OCR_HEADER = "=== SOURCE: Uploaded Image (OCR) ==="
 
@@ -102,7 +85,6 @@ SYNTHESIS_CONTEXT_NO_CONTEXT = (
 
 
 def synthesis_rag_header(source: str) -> str:
-    """Return the labelled section header for a RAG chunk from *source*."""
     return f"=== SOURCE: Course Notes — {source} ==="
 
 

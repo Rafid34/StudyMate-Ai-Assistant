@@ -12,10 +12,6 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-# ---------------------------------------------------------------------------
-# /upload
-# ---------------------------------------------------------------------------
-
 
 class UploadResponse(BaseModel):
     message: str
@@ -46,11 +42,6 @@ class UploadResponse(BaseModel):
     )
 
 
-# ---------------------------------------------------------------------------
-# /ask
-# ---------------------------------------------------------------------------
-
-
 class AskRequest(BaseModel):
     query: str
     session_id: str
@@ -75,11 +66,6 @@ class AskResponse(BaseModel):
     answer: str
     sources: List[Source]
     trace_url: Optional[str] = None  # LangSmith trace URL; None if tracing is off
-
-
-# ---------------------------------------------------------------------------
-# /health
-# ---------------------------------------------------------------------------
 
 
 class HealthResponse(BaseModel):
