@@ -270,24 +270,6 @@ studymate_pipeline
 
 ---
 
-## Screenshots
-
-> **To add screenshots:** run the app, capture the screens listed below, and save them to `docs/screenshots/` with the specified filenames. Then uncomment the image tags.
-
-| Filename | What to capture |
-|----------|-----------------|
-| `docs/screenshots/chat_pdf.png` | Chat after uploading a PDF -- expand the Sources panel to show "From your notes:" |
-| `docs/screenshots/chat_ocr.png` | Chat after uploading an image -- sidebar showing OCR preview + answer with "From your uploaded image:" |
-| `docs/screenshots/chat_web.png` | Chat with a live-search answer -- Sources panel showing web links |
-| `docs/screenshots/langsmith_trace.png` | LangSmith trace detail showing `router_agent` -> `rag_agent` / `search_agent` -> `synthesis_agent` |
-
-<!--
-![Chat with PDF uploaded](docs/screenshots/chat_pdf.png)
-![Chat with OCR result](docs/screenshots/chat_ocr.png)
-![Chat with web search](docs/screenshots/chat_web.png)
-![LangSmith trace](docs/screenshots/langsmith_trace.png)
--->
-
 ---
 
 ## Limitations / Future Improvements
